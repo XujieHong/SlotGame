@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
+import android.os.Message;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -94,7 +95,7 @@ public class MainActivity extends AppCompatActivity {
 
         mGamePanelView = findViewById(R.id.game_panel);
 
-        mGamePanelView.init(getApplicationContext());
+        mGamePanelView.init(getApplicationContext(), handler);
 
         toggle();
 
@@ -161,8 +162,15 @@ public class MainActivity extends AppCompatActivity {
             mGamePanelView.startGame();
         } else {
             int stayIndex = new Random().nextInt(24);
-            Log.e("KenHong", "====stay===" + stayIndex);
             mGamePanelView.tryToStop(stayIndex);
         }
     }
+
+    private Handler handler = new Handler(){
+        @Override
+        public void handleMessage(Message msg){
+            super.handleMessage(msg);
+            mGamePanelView.processMessage(msg.what);
+        }
+    };
 }

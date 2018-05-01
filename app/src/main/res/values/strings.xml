@@ -3,4 +3,7 @@
 
     <string name="start_button">START</string>
     <string name="Luck_content">777\n幸运大转盘</string>
+    <string name="coins">Coins:</string>
+
+
 </resources>

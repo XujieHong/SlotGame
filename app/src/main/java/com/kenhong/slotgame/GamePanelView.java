@@ -8,6 +8,7 @@ import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.media.SoundPool;
 import android.net.Uri;
+import android.os.Message;
 import android.support.annotation.AttrRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -15,16 +16,21 @@ import android.util.AttributeSet;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 
+import android.os.Handler;
 
 
 public class GamePanelView extends FrameLayout {
 
+    private static final int ROLLING_STOP = 1;
+
     private ImageView[] ivArr = new ImageView[24];
 
     Context mContext;
+    Handler mHandler;
 
     SoundPool mSoundPool;
-    private int mSoundId;
+    private int mRollingSoundId;
+    private int mStopSoundId;
 
     private boolean isMarqueeRunning = false;
     private boolean isGameRunning = false;
@@ -101,6 +107,10 @@ public class GamePanelView extends FrameLayout {
 
                             if (isTryToStop && currentSpeed == DEFAULT_SPEED && stayIndex == currentIndex) {
                                 isGameRunning = false;
+                                //mSoundPool.play(mStopSoundId, 1.0f, 1.0f, 0, 0, 1.0f);
+                                Message message = new Message();
+                                message.what = ROLLING_STOP;
+                                mHandler.sendMessage(message);
                             }
                         }
                     });
@@ -112,7 +122,7 @@ public class GamePanelView extends FrameLayout {
 
     private void setFocus(ImageView iv, boolean isFocused){
 
-        mSoundPool.play(mSoundId, 1.0f, 1.0f, 0, 0, 1.0f);
+        mSoundPool.play(mRollingSoundId, 1.0f, 1.0f, 0, 0, 2.0f);
         iv.setImageAlpha(isFocused ? ALPHA_FOCUS : ALPHA_NO_FOCUS);
     }
 
@@ -143,15 +153,31 @@ public class GamePanelView extends FrameLayout {
         isTryToStop = true;
     }
 
-    public void init(Context context){
+    public void init(Context context, Handler handler){
         mContext = context;
+        mHandler = handler;
         mSoundPool = new SoundPool.Builder()
-                .setMaxStreams(1)
+                .setMaxStreams(5)
                 .setAudioAttributes(new AudioAttributes.Builder()
                         .setLegacyStreamType(AudioManager.STREAM_MUSIC)
                         .build())
                 .build();
 
-        mSoundId = mSoundPool.load(context, R.raw.di, 1);
+        mRollingSoundId = mSoundPool.load(context, R.raw.doo, 1);
+        mStopSoundId = mSoundPool.load(context, R.raw.didong, 1);
+    }
+
+    private void endRolling(){
+        mSoundPool.play(mStopSoundId, 1.0f, 1.0f, 1, 0, 1.0f);
+    }
+
+    public void processMessage(int msg){
+        switch (msg){
+            case ROLLING_STOP:
+                endRolling();
+                break;
+            default:
+                break;
+        }
     }
 }
