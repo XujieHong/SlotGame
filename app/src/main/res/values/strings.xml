@@ -1,0 +1,6 @@
+<resources>
+    <string name="app_name">SlotGame</string>
+
+    <string name="start_button">START</string>
+    <string name="Luck_content">777\n幸运大转盘</string>
+</resources>
