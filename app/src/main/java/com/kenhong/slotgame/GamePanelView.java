@@ -17,6 +17,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 
 import android.os.Handler;
+import android.widget.TextView;
 
 
 public class GamePanelView extends FrameLayout {
@@ -25,12 +26,15 @@ public class GamePanelView extends FrameLayout {
 
     private ImageView[] ivArr = new ImageView[24];
 
-    Context mContext;
-    Handler mHandler;
+    private int[] mStake = new int[8];
 
-    SoundPool mSoundPool;
+    private Context mContext;
+    private Handler mHandler;
+
+    private SoundPool mSoundPool;
     private int mRollingSoundId;
     private int mStopSoundId;
+    private boolean mIsMute = false;
 
     private boolean isMarqueeRunning = false;
     private boolean isGameRunning = false;
@@ -79,6 +83,7 @@ public class GamePanelView extends FrameLayout {
 
     public void startGame(){
         isGameRunning = true;
+        mIsMute = false;
         isTryToStop = false;
         currentSpeed = DEFAULT_SPEED;
         new Thread(new Runnable() {
@@ -121,8 +126,10 @@ public class GamePanelView extends FrameLayout {
     }
 
     private void setFocus(ImageView iv, boolean isFocused){
+        if(!mIsMute){
+            mSoundPool.play(mRollingSoundId, 1.0f, 1.0f, 0, 0, 2.0f);
+        }
 
-        mSoundPool.play(mRollingSoundId, 1.0f, 1.0f, 0, 0, 2.0f);
         iv.setImageAlpha(isFocused ? ALPHA_FOCUS : ALPHA_NO_FOCUS);
     }
 
@@ -165,10 +172,20 @@ public class GamePanelView extends FrameLayout {
 
         mRollingSoundId = mSoundPool.load(context, R.raw.doo, 1);
         mStopSoundId = mSoundPool.load(context, R.raw.didong, 1);
+        for(int i = 0; i < 8; i++){
+            mStake[i] = 0;
+        }
     }
 
     private void endRolling(){
         mSoundPool.play(mStopSoundId, 1.0f, 1.0f, 1, 0, 1.0f);
+        mIsMute = true;
+
+        for(int i = 0; i < 8; i++){
+            mStake[i] = 0;
+            TextView tv = findViewById(R.id.text_bet01 + i);
+            tv.setText("0");
+        }
     }
 
     public void processMessage(int msg){
@@ -178,6 +195,56 @@ public class GamePanelView extends FrameLayout {
                 break;
             default:
                 break;
+        }
+    }
+
+    public void betOn(int id){
+        TextView tv = null;
+        int index = -1;
+
+        switch (id){
+            case R.id.image_bet01:
+                index = 0;
+                tv = findViewById(R.id.text_bet01);
+                break;
+            case R.id.image_bet02:
+                index = 1;
+                tv = findViewById(R.id.text_bet02);
+                break;
+            case R.id.image_bet03:
+                index = 2;
+                tv = findViewById(R.id.text_bet03);
+                break;
+            case R.id.image_bet04:
+                index = 3;
+                tv = findViewById(R.id.text_bet04);
+                break;
+            case R.id.image_bet05:
+                index = 4;
+                tv = findViewById(R.id.text_bet05);
+                break;
+            case R.id.image_bet06:
+                index = 5;
+                tv = findViewById(R.id.text_bet06);
+                break;
+            case R.id.image_bet07:
+                index = 6;
+                tv = findViewById(R.id.text_bet07);
+                break;
+            case R.id.image_bet08:
+                index = 7;
+                tv = findViewById(R.id.text_bet08);
+                break;
+            default:
+                index = -1;
+                break;
+        }
+
+        if(index >= 0){
+            mStake[index]++;
+            if(tv != null){
+                tv.setText("" + mStake[index]);
+            }
         }
     }
 }

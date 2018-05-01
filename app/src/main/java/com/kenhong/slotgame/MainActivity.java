@@ -13,6 +13,7 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import java.util.Random;
 
@@ -164,6 +165,11 @@ public class MainActivity extends AppCompatActivity {
             int stayIndex = new Random().nextInt(24);
             mGamePanelView.tryToStop(stayIndex);
         }
+    }
+
+    public void betOn(View view){
+        int id = view.getId();
+        mGamePanelView.betOn(id);
     }
 
     private Handler handler = new Handler(){
