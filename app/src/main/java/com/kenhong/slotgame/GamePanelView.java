@@ -30,7 +30,6 @@ public class GamePanelView extends FrameLayout {
     private int[] mStake = new int[8];
     private int[] mPreStake = new int[8];
 
-    private Context mContext;
     private Handler mHandler;
 
     private SoundPool mSoundPool;
@@ -75,18 +74,6 @@ public class GamePanelView extends FrameLayout {
         super(context, attrs, defStyleAttr);
         inflate(context, R.layout.game_panel_view, this);
         setupView();
-
-        mSoundPool = new SoundPool.Builder()
-                .setMaxStreams(15)
-                .setAudioAttributes(new AudioAttributes.Builder()
-                        .setLegacyStreamType(AudioManager.STREAM_MUSIC)
-                        .build())
-                .build();
-
-        mRollingSoundId = mSoundPool.load(context, R.raw.doo, 1);
-        mStopSoundId = mSoundPool.load(context, R.raw.didong, 1);
-        mInsertCoinSoundId = mSoundPool.load(context, R.raw.insertcoin, 1);
-        mErrorSoundId = mSoundPool.load(context, R.raw.ding, 1);
     }
 
     @Override
@@ -99,7 +86,6 @@ public class GamePanelView extends FrameLayout {
         super.onDetachedFromWindow();
     }
 
-
     private void setupView(){
         for(int i = 0; i < 24; i++){
             ivArr[i] = findViewById(R.id.image01 + i);
@@ -108,6 +94,11 @@ public class GamePanelView extends FrameLayout {
     }
 
     public boolean startGame(){
+
+        if(isRolling){
+            return false;
+        }
+
         int stakes = 0;
         int preStakes = 0;
         for(int i = 0; i < 8; i++){
@@ -129,7 +120,6 @@ public class GamePanelView extends FrameLayout {
                         tv.setText("0");
                         tv.setTextColor(Color.GRAY);
                     }
-
                 }
 
                 tv = findViewById(R.id.coins);
@@ -253,7 +243,6 @@ public class GamePanelView extends FrameLayout {
     }
 
     public void init(Context context, Handler handler){
-        mContext = context;
         mHandler = handler;
 
 
@@ -264,6 +253,23 @@ public class GamePanelView extends FrameLayout {
 
         TextView tv = findViewById(R.id.coins);
         tv.setText("" + mCoins);
+
+        mSoundPool = new SoundPool.Builder()
+                .setMaxStreams(15)
+                .setAudioAttributes(new AudioAttributes.Builder()
+                        .setLegacyStreamType(AudioManager.STREAM_MUSIC)
+                        .build())
+                .build();
+
+        mRollingSoundId = mSoundPool.load(context, R.raw.doo, 1);
+        mStopSoundId = mSoundPool.load(context, R.raw.didong, 1);
+        mInsertCoinSoundId = mSoundPool.load(context, R.raw.insertcoin, 1);
+        mErrorSoundId = mSoundPool.load(context, R.raw.ding, 1);
+    }
+
+    public void release(){
+        Log.d("KenHong", "Release");
+        mSoundPool.release();
     }
 
     private void endRolling(){
