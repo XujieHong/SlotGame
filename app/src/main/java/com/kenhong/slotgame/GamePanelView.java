@@ -221,7 +221,7 @@ public class GamePanelView extends FrameLayout {
 
         if(type >= 0 && type < 8){
             for(int i = 0; i < 8; i++){
-                if(type == i + 1){
+                if(type == i){
                     mCoins += mOddsTable[stayIndex] * mStake[type];
 
                     Log.d("KenHong", "stayIndex = " + stayIndex
