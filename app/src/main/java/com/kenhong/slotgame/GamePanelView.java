@@ -1,6 +1,7 @@
 package com.kenhong.slotgame;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.media.SoundPool;
@@ -15,6 +16,8 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import java.util.Random;
+
 
 public class GamePanelView extends FrameLayout {
 
@@ -25,6 +28,7 @@ public class GamePanelView extends FrameLayout {
     private ImageView[] ivArr = new ImageView[24];
 
     private int[] mStake = new int[8];
+    private int[] mPreStake = new int[8];
 
     private Context mContext;
     private Handler mHandler;
@@ -34,20 +38,24 @@ public class GamePanelView extends FrameLayout {
     private int mStopSoundId;
     private int mInsertCoinSoundId;
     private int mErrorSoundId;
-    private boolean mIsRolling = false;
+
     private final int[] mOddsTable = {10, 10, 25, 50, 5, 2, 10, 20, 2, 0, 5, 2, 10, 10, 2, 20, 5, 2, 10, 20, 2, 0, 5, 2};
     private final int[] mTypeTable = {6, 4, 0, 0, 7, 7, 5, 3, 3, 8, 7, 6, 6, 4, 1, 1, 7, 5, 5, 2, 2, 9, 7, 4};
-    private final int[] mProbablityTable = {};
+    private final int[] mProbablityTable = {10, 10, 4, 2, 20, 50, 10, 5, 50, 1, 20, 50, 10, 10, 50, 5, 20, 50, 10, 5, 50, 1, 20, 50};
 
     private boolean isGameRunning = false;
     private boolean isTryToStop = false;
     private boolean isTryToStopRolling = false;
+    private boolean isRolling = false;
+    private boolean isBeted = false;
+
+
     private int preIndex = 0;
     private int currentIndex = 0;
     private int currentTotal = 0;
     private int stayIndex = 0;
 
-    private int mCoins = 10;
+    private int mCoins = 100;
 
     private static final int DEFAULT_SPEED = 150;
     private static final int MIN_SPEED = 50;
@@ -67,6 +75,18 @@ public class GamePanelView extends FrameLayout {
         super(context, attrs, defStyleAttr);
         inflate(context, R.layout.game_panel_view, this);
         setupView();
+
+        mSoundPool = new SoundPool.Builder()
+                .setMaxStreams(15)
+                .setAudioAttributes(new AudioAttributes.Builder()
+                        .setLegacyStreamType(AudioManager.STREAM_MUSIC)
+                        .build())
+                .build();
+
+        mRollingSoundId = mSoundPool.load(context, R.raw.doo, 1);
+        mStopSoundId = mSoundPool.load(context, R.raw.didong, 1);
+        mInsertCoinSoundId = mSoundPool.load(context, R.raw.insertcoin, 1);
+        mErrorSoundId = mSoundPool.load(context, R.raw.ding, 1);
     }
 
     @Override
@@ -87,9 +107,41 @@ public class GamePanelView extends FrameLayout {
         }
     }
 
-    public void startGame(){
+    public boolean startGame(){
+        int stakes = 0;
+        int preStakes = 0;
+        for(int i = 0; i < 8; i++){
+            stakes += mStake[i];
+            preStakes += mPreStake[i];
+        }
+
+        if(stakes == 0){
+            if(mCoins >= preStakes && preStakes > 0){
+                TextView tv;
+                mCoins -= preStakes;
+                for(int i = 0; i < 8; i++){
+                    mStake[i] = mPreStake[i];
+                    tv = findViewById(R.id.text_bet01 + i);
+                    if(mStake[i] > 0){
+                        tv.setText("" + mStake[i]);
+                        tv.setTextColor(Color.BLUE);
+                    }else {
+                        tv.setText("0");
+                        tv.setTextColor(Color.GRAY);
+                    }
+
+                }
+
+                tv = findViewById(R.id.coins);
+                tv.setText("" + mCoins);
+            }else{
+                mSoundPool.play(mErrorSoundId, 1.0f, 1.0f, 2, 0, 1.0f);
+                return false;
+            }
+        }
+
         isGameRunning = true;
-        mIsRolling = true;
+        isRolling = true;
         isTryToStop = false;
         currentSpeed = MIN_SPEED;
         new Thread(new Runnable() {
@@ -132,6 +184,7 @@ public class GamePanelView extends FrameLayout {
             }
         }).start();
 
+        return true;
     }
 
     private void setFocus(int pre, int cur){
@@ -163,15 +216,24 @@ public class GamePanelView extends FrameLayout {
         return isGameRunning;
     }
 
-    public void tryToStop(int position) {
+    public void tryToStop() {
+        int position = new Random().nextInt(513);
+
+        for(int i = 0; i < 24; i++){
+            position -= mProbablityTable[i];
+            if(position < 0){
+                stayIndex = i;
+                break;
+            }
+        }
+
         isTryToStopRolling = true;
-        stayIndex = position;
         new Thread(new Runnable() {
             @Override
             public void run() {
                 while (isTryToStopRolling) {
                     try {
-                        Thread.sleep(4000);
+                        Thread.sleep(2000);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -193,20 +255,11 @@ public class GamePanelView extends FrameLayout {
     public void init(Context context, Handler handler){
         mContext = context;
         mHandler = handler;
-        mSoundPool = new SoundPool.Builder()
-                .setMaxStreams(10)
-                .setAudioAttributes(new AudioAttributes.Builder()
-                        .setLegacyStreamType(AudioManager.STREAM_MUSIC)
-                        .build())
-                .build();
 
-        mRollingSoundId = mSoundPool.load(context, R.raw.doo, 1);
-        mStopSoundId = mSoundPool.load(context, R.raw.didong, 1);
-        mInsertCoinSoundId = mSoundPool.load(context, R.raw.insertcoin, 1);
-        mErrorSoundId = mSoundPool.load(context, R.raw.ding, 1);
 
         for(int i = 0; i < 8; i++){
             mStake[i] = 0;
+            mPreStake[i] = 0;
         }
 
         TextView tv = findViewById(R.id.coins);
@@ -215,23 +268,29 @@ public class GamePanelView extends FrameLayout {
 
     private void endRolling(){
         mSoundPool.play(mStopSoundId, 1.0f, 1.0f, 1, 0, 1.0f);
-        mIsRolling = false;
+        isRolling = false;
+        isBeted = false;
 
         int type = mTypeTable[stayIndex];
 
         if(type >= 0 && type < 8){
             for(int i = 0; i < 8; i++){
+                TextView tv = findViewById(R.id.text_bet01 + i);
                 if(type == i){
                     mCoins += mOddsTable[stayIndex] * mStake[type];
+                    tv.setTextColor(Color.RED);
 
                     Log.d("KenHong", "stayIndex = " + stayIndex
                             + "; mOddsTable[stayIndex] = " + mOddsTable[stayIndex]
                             + "; type = " + type
                             + "; mStake[type] = " + mStake[type]);
+                }else{
+                    tv.setTextColor(Color.GRAY);
                 }
+                mPreStake[i] = mStake[i];
                 mStake[i] = 0;
-                TextView tv = findViewById(R.id.text_bet01 + i);
-                tv.setText("0");
+                //TextView tv = findViewById(R.id.text_bet01 + i);
+                //tv.setText("0");
             }
             TextView tv = findViewById(R.id.coins);
             tv.setText("" + mCoins);
@@ -255,15 +314,24 @@ public class GamePanelView extends FrameLayout {
     }
 
     public void betOn(int id){
-        if(mIsRolling || mCoins <= 0){
+        if(isRolling || mCoins <= 0){
             mSoundPool.play(mErrorSoundId, 1.0f, 1.0f, 2, 0, 1.0f);
         }else {
             int index = id - R.id.image_bet01;
+            if(!isBeted){
+                isBeted = true;
+                for(int i = 0; i < 8; i++){
+                    TextView tv = findViewById(R.id.text_bet01 + i);
+                    tv.setText("0");
+                    tv.setTextColor(Color.GRAY);
+                }
+            }
 
             mCoins--;
             mStake[index]++;
             TextView tv = findViewById(R.id.text_bet01 + index);
             tv.setText("" + mStake[index]);
+            tv.setTextColor(Color.BLUE);
 
             tv = findViewById(R.id.coins);
             tv.setText("" + mCoins);

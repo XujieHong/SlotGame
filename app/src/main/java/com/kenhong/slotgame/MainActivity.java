@@ -154,9 +154,10 @@ public class MainActivity extends AppCompatActivity {
 
     public void startGame(View view){
         if (!mGamePanelView.isGameRunning()) {
-            mGamePanelView.startGame();
-            int stayIndex = new Random().nextInt(24);
-            mGamePanelView.tryToStop(stayIndex);
+            if(mGamePanelView.startGame()) {
+                //int stayIndex = new Random().nextInt(24);
+                mGamePanelView.tryToStop();
+            }
         }
     }
 

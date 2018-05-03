@@ -9,16 +9,6 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-        <Button
-            android:id="@+id/dummy_button"
-            style="@style/Base.Widget.AppCompat.ActionButton"
-            android:layout_width="116dp"
-            android:layout_height="51dp"
-            android:layout_gravity="center"
-            android:background="#9a8ca1"
-            android:onClick="startGame"
-            android:text="@string/start_button" />
-
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -197,7 +187,7 @@
 
     <TextView
         android:layout_width="match_parent"
-        android:layout_height="20dp" />
+        android:layout_height="10dp" />
 
     <LinearLayout
         android:layout_width="wrap_content"
@@ -319,4 +309,17 @@
             android:onClick="betOn"
             android:id="@+id/image_bet08"/>
     </LinearLayout>
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="10dp" />
+    <Button
+        android:id="@+id/dummy_button"
+        style="@style/Base.Widget.AppCompat.ActionButton"
+        android:layout_width="51dp"
+        android:layout_height="51dp"
+        android:layout_gravity="right"
+        android:onClick="startGame"
+        android:background="@drawable/bg_special_disease_circle"
+        android:textSize="8dp"
+        android:text="@string/start_button" />
 </LinearLayout>
