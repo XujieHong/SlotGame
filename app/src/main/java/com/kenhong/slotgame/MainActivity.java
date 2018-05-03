@@ -1,19 +1,13 @@
 package com.kenhong.slotgame;
 
 import android.annotation.SuppressLint;
-import android.graphics.Color;
-import android.graphics.drawable.Drawable;
-import android.graphics.drawable.GradientDrawable;
+import android.os.Bundle;
+import android.os.Handler;
 import android.os.Message;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
-import android.os.Handler;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.ImageView;
-import android.widget.TextView;
 
 import java.util.Random;
 
@@ -161,7 +155,6 @@ public class MainActivity extends AppCompatActivity {
     public void startGame(View view){
         if (!mGamePanelView.isGameRunning()) {
             mGamePanelView.startGame();
-        } else {
             int stayIndex = new Random().nextInt(24);
             mGamePanelView.tryToStop(stayIndex);
         }
@@ -176,7 +169,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void handleMessage(Message msg){
             super.handleMessage(msg);
-            mGamePanelView.processMessage(msg.what);
+            mGamePanelView.processMessage(msg.what, msg.arg1, msg.arg2);
         }
     };
 }
