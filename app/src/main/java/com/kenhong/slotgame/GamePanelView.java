@@ -26,6 +26,8 @@ public class GamePanelView extends FrameLayout {
     private static final int TRY_TO_STOP_ROLLING = 3;
 
     private ImageView[] ivArr = new ImageView[24];
+    private Boolean[] isIvFocusedArr = {false, false, false, false, false, false, false, false, false, false,
+            false, false, false, false, false, false, false, false, false, false, false, false, false, false};
 
     private int[] mStake = new int[8];
     private int[] mPreStake = new int[8];
@@ -40,7 +42,8 @@ public class GamePanelView extends FrameLayout {
 
     private final int[] mOddsTable = {10, 10, 25, 50, 5, 2, 10, 20, 2, 0, 5, 2, 10, 10, 2, 20, 5, 2, 10, 20, 2, 0, 5, 2};
     private final int[] mTypeTable = {6, 4, 0, 0, 7, 7, 5, 3, 3, 8, 7, 6, 6, 4, 1, 1, 7, 5, 5, 2, 2, 9, 7, 4};
-    private final int[] mProbablityTable = {10, 10, 4, 2, 20, 50, 10, 5, 50, 1, 20, 50, 10, 10, 50, 5, 20, 50, 10, 5, 50, 1, 20, 50};
+    private final int[] mProbablityTable = {10, 10, 4, 2, 20, 50, 10, 5, 50, 100, 20, 50, 10, 10, 50, 5, 20, 50, 10, 5, 50, 100, 20, 50};
+    private int mSumProbablityTable = 0;
 
     private boolean isGameRunning = false;
     private boolean isTryToStop = false;
@@ -48,11 +51,11 @@ public class GamePanelView extends FrameLayout {
     private boolean isRolling = false;
     private boolean isBeted = false;
 
-
     private int preIndex = 0;
     private int currentIndex = 0;
     private int currentTotal = 0;
     private int stayIndex = 0;
+    private int remainRollingTimes = 0;
 
     private int mCoins = 100;
 
@@ -73,7 +76,6 @@ public class GamePanelView extends FrameLayout {
     public GamePanelView(@NonNull Context context, @Nullable AttributeSet attrs, @AttrRes int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         inflate(context, R.layout.game_panel_view, this);
-        setupView();
     }
 
     @Override
@@ -86,17 +88,26 @@ public class GamePanelView extends FrameLayout {
         super.onDetachedFromWindow();
     }
 
-    private void setupView(){
+    private void setupView(Boolean reset){
         for(int i = 0; i < 24; i++){
+            if(reset){
+                isIvFocusedArr[i] = false;
+            }
+
             ivArr[i] = findViewById(R.id.image01 + i);
-            ivArr[i].setImageAlpha(ALPHA_NO_FOCUS);
+            if(!isIvFocusedArr[i]){
+                ivArr[i].setImageAlpha(ALPHA_NO_FOCUS);
+            }
         }
     }
 
-    public boolean startGame(){
-
+    public boolean startGame(Boolean isClicked){
         if(isRolling){
             return false;
+        }
+
+        if(isClicked){
+            setupView(true);
         }
 
         int stakes = 0;
@@ -109,16 +120,24 @@ public class GamePanelView extends FrameLayout {
         if(stakes == 0){
             if(mCoins >= preStakes && preStakes > 0){
                 TextView tv;
-                mCoins -= preStakes;
+                if(remainRollingTimes <= 0){
+                    mCoins -= preStakes;
+                }
+
                 for(int i = 0; i < 8; i++){
                     mStake[i] = mPreStake[i];
                     tv = findViewById(R.id.text_bet01 + i);
                     if(mStake[i] > 0){
                         tv.setText("" + mStake[i]);
-                        tv.setTextColor(Color.BLUE);
+                        if(remainRollingTimes <= 0) {
+                            tv.setTextColor(Color.BLUE);
+                        }
                     }else {
                         tv.setText("0");
-                        tv.setTextColor(Color.GRAY);
+                        if(remainRollingTimes <= 0) {
+                            tv.setTextColor(Color.GRAY);
+                            Log.d("KenHong", "Color setGRAY");
+                        }
                     }
                 }
 
@@ -180,8 +199,13 @@ public class GamePanelView extends FrameLayout {
     private void setFocus(int pre, int cur){
         Log.d("KenHong", "pre = " + pre + "; cur = " + cur);
         mSoundPool.play(mRollingSoundId, 1.0f, 1.0f, 0, 0, 2.0f);
-        ivArr[pre].setImageAlpha(ALPHA_NO_FOCUS);
+
+        if(!isIvFocusedArr[pre]){
+            ivArr[pre].setImageAlpha(ALPHA_NO_FOCUS);
+        }
+
         ivArr[cur].setImageAlpha(ALPHA_FOCUS);
+
     }
 
     private long getInterruptTime() {
@@ -207,14 +231,36 @@ public class GamePanelView extends FrameLayout {
     }
 
     public void tryToStop() {
-        int position = new Random().nextInt(513);
 
-        for(int i = 0; i < 24; i++){
-            position -= mProbablityTable[i];
-            if(position < 0){
-                stayIndex = i;
-                break;
+
+        if(remainRollingTimes > 0){
+            remainRollingTimes--;
+            do {
+                int position = new Random().nextInt(mSumProbablityTable);
+                for(int i = 0; i < 24; i++){
+                    position -= mProbablityTable[i];
+                    if(position < 0){
+                        stayIndex = i;
+                        break;
+                    }
+                }
+            }while (stayIndex == 9 || stayIndex == 21);
+
+        }else{
+            int position = new Random().nextInt(mSumProbablityTable);
+            for(int i = 0; i < 24; i++){
+                position -= mProbablityTable[i];
+                if(position < 0){
+                    stayIndex = i;
+                    break;
+                }
             }
+        }
+
+        if(stayIndex == 9){
+            remainRollingTimes = 3;
+        }else if(stayIndex == 21){
+            remainRollingTimes = 3;
         }
 
         isTryToStopRolling = true;
@@ -245,11 +291,18 @@ public class GamePanelView extends FrameLayout {
     public void init(Context context, Handler handler){
         mHandler = handler;
 
+        setupView(true);
 
         for(int i = 0; i < 8; i++){
             mStake[i] = 0;
             mPreStake[i] = 0;
         }
+
+        mSumProbablityTable = 0;
+        for(int i = 0; i < 24; i++){
+            mSumProbablityTable += mProbablityTable[i];
+        }
+
 
         TextView tv = findViewById(R.id.coins);
         tv.setText("" + mCoins);
@@ -284,14 +337,13 @@ public class GamePanelView extends FrameLayout {
                 TextView tv = findViewById(R.id.text_bet01 + i);
                 if(type == i){
                     mCoins += mOddsTable[stayIndex] * mStake[type];
+                    Log.d("KenHong", "Color setRED");
                     tv.setTextColor(Color.RED);
 
                     Log.d("KenHong", "stayIndex = " + stayIndex
                             + "; mOddsTable[stayIndex] = " + mOddsTable[stayIndex]
                             + "; type = " + type
                             + "; mStake[type] = " + mStake[type]);
-                }else{
-                    tv.setTextColor(Color.GRAY);
                 }
                 mPreStake[i] = mStake[i];
                 mStake[i] = 0;
@@ -306,7 +358,15 @@ public class GamePanelView extends FrameLayout {
     public void processMessage(int msg, int arg1, int arg2){
         switch (msg){
             case ROLLING_STOP:
+                isIvFocusedArr[stayIndex] = true;
                 endRolling();
+                if(remainRollingTimes > 0){
+                    //remainRollingTimes--;
+                    if(startGame(false)){
+                        tryToStop();
+                    }
+                }
+
                 break;
             case ROLLING_FOCUS:
                 setFocus(arg1, arg2);
